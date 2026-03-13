@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jewellery Inventory Dashboard</title>
+    <style>
+        :root {
+            --bg: #f6f1e8;
+            --panel: #fffaf2;
+            --line: #d6c6ac;
+            --ink: #2f2418;
+            --muted: #7b6a57;
+            --gold: #b3832d;
+            --green: #2d7a46;
+            --red: #a33e2f;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", sans-serif;
+            background: linear-gradient(180deg, #efe5d3, var(--bg));
+            color: var(--ink);
+        }
+        .wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        h1, h2 { margin: 0 0 12px; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .card, .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 18px;
+            box-shadow: 0 10px 24px rgba(47, 36, 24, 0.06);
+        }
+        .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gold);
+        }
+        .layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 18px;
+        }
+        .stack {
+            display: grid;
+            gap: 18px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #eadfcd;
+            text-align: left;
+            font-size: 14px;
+        }
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        form {
+            display: grid;
+            gap: 10px;
+        }
+        input, select, textarea, button {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            font: inherit;
+        }
+        button {
+            background: var(--ink);
+            color: white;
+            cursor: pointer;
+        }
+        .issue button { background: var(--red); }
+        .receipt button { background: var(--green); }
+        .muted { color: var(--muted); font-size: 14px; }
+        .message { min-height: 22px; font-size: 14px; }
+        @media (max-width: 900px) {
+            .layout { grid-template-columns: 1fr; }
+            .actions { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <h1>Jewellery Inventory Dashboard</h1>
+    <p class="muted">Simple demo UI for dashboard, client balances, and issue/receive transactions.</p>
+
+    <section class="grid">
+        <div class="card">
+            <div class="muted">Locker Pure Gold</div>
+            <div class="value" id="lockerValue">-</div>
+        </div>
+        <div class="card">
+            <div class="muted">Client Pure Gold</div>
+            <div class="value" id="clientValue">-</div>
+        </div>
+        <div class="card">
+            <div class="muted">Total Business Gold</div>
+            <div class="value" id="totalValue">-</div>
+        </div>
+        <div class="card">
+            <div class="muted">Clients</div>
+            <div class="value" id="clientCount">-</div>
+        </div>
+    </section>
+
+    <section class="layout">
+        <div class="stack">
+            <div class="panel">
+                <h2>Clients</h2>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Pure Balance</th>
+                    </tr>
+                    </thead>
+                    <tbody id="clientTable"></tbody>
+                </table>
+            </div>
+
+            <div class="panel">
+                <h2>Monthly Flow</h2>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Issue</th>
+                        <th>Receipt</th>
+                    </tr>
+                    </thead>
+                    <tbody id="reportTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="stack">
+            <div class="panel">
+                <h2>Add Client</h2>
+                <form id="clientForm">
+                    <input name="name" placeholder="Client name" required>
+                    <input name="openingPureBalance" type="number" step="0.001" min="0" placeholder="Opening pure balance">
+                    <button type="submit">Create Client</button>
+                </form>
+                <div class="message" id="clientMessage"></div>
+            </div>
+
+            <div class="panel">
+                <h2>Transactions</h2>
+                <div class="actions">
+                    <form id="issueForm" class="issue">
+                        <h3>Issue</h3>
+                        <select name="clientId" required></select>
+                        <input name="grossWeight" type="number" step="0.001" min="0.001" placeholder="Gross weight" required>
+                        <input name="purityPercent" type="number" step="0.01" min="0.01" placeholder="Purity %" required>
+                        <input name="makingChargePercent" type="number" step="0.01" min="0" placeholder="Making charge %" required>
+                        <input name="transactionDate" type="date" required>
+                        <textarea name="notes" placeholder="Notes"></textarea>
+                        <button type="submit">Save Issue</button>
+                    </form>
+
+                    <form id="receiptForm" class="receipt">
+                        <h3>Receive</h3>
+                        <select name="clientId" required></select>
+                        <input name="grossWeight" type="number" step="0.001" min="0.001" placeholder="Gross weight" required>
+                        <input name="purityPercent" type="number" step="0.01" min="0.01" placeholder="Purity %" required>
+                        <input name="transactionDate" type="date" required>
+                        <textarea name="notes" placeholder="Notes"></textarea>
+                        <button type="submit">Save Receipt</button>
+                    </form>
+                </div>
+                <div class="message" id="transactionMessage"></div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+    const today = new Date().toISOString().slice(0, 10);
+    document.querySelector('#issueForm [name="transactionDate"]').value = today;
+    document.querySelector('#receiptForm [name="transactionDate"]').value = today;
+
+    async function loadDashboard() {
+        const res = await fetch('/api/dashboard');
+        const data = await res.json();
+        document.getElementById('lockerValue').textContent = data.lockerPureGold + ' g';
+        document.getElementById('clientValue').textContent = data.totalClientPureGold + ' g';
+        document.getElementById('totalValue').textContent = data.totalBusinessPureGold + ' g';
+        document.getElementById('clientCount').textContent = data.clientCount;
+    }
+
+    async function loadClients() {
+        const res = await fetch('/api/clients');
+        const data = await res.json();
+        const table = document.getElementById('clientTable');
+        table.innerHTML = data.map(client => `
+            <tr>
+                <td>${client.id}</td>
+                <td>${client.name}</td>
+                <td>${client.currentPureBalance} g</td>
+            </tr>
+        `).join('');
+
+        const options = data.map(client => `<option value="${client.id}">${client.name}</option>`).join('');
+        document.querySelector('#issueForm select[name="clientId"]').innerHTML = options;
+        document.querySelector('#receiptForm select[name="clientId"]').innerHTML = options;
+    }
+
+    async function loadReport() {
+        const res = await fetch('/api/reports/monthly-flow');
+        const data = await res.json();
+        const table = document.getElementById('reportTable');
+        table.innerHTML = data.map(row => `
+            <tr>
+                <td>${row.month}</td>
+                <td>${row.issuePureGold}</td>
+                <td>${row.receiptPureGold}</td>
+            </tr>
+        `).join('');
+    }
+
+    async function postJson(url, payload) {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.message || 'Request failed');
+        }
+        return data;
+    }
+
+    document.getElementById('clientForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.target;
+        const payload = {
+            name: form.name.value,
+            openingPureBalance: form.openingPureBalance.value || 0
+        };
+        try {
+            await postJson('/api/clients', payload);
+            document.getElementById('clientMessage').textContent = 'Client created successfully.';
+            form.reset();
+            await Promise.all([loadClients(), loadDashboard()]);
+        } catch (error) {
+            document.getElementById('clientMessage').textContent = error.message;
+        }
+    });
+
+    document.getElementById('issueForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.target;
+        const payload = {
+            clientId: Number(form.clientId.value),
+            transactionType: 'ISSUE',
+            grossWeight: Number(form.grossWeight.value),
+            purityPercent: Number(form.purityPercent.value),
+            makingChargePercent: Number(form.makingChargePercent.value),
+            transactionDate: form.transactionDate.value,
+            notes: form.notes.value
+        };
+        try {
+            await postJson('/api/transactions', payload);
+            document.getElementById('transactionMessage').textContent = 'Issue transaction saved.';
+            form.reset();
+            form.transactionDate.value = today;
+            await Promise.all([loadClients(), loadDashboard(), loadReport()]);
+        } catch (error) {
+            document.getElementById('transactionMessage').textContent = error.message;
+        }
+    });
+
+    document.getElementById('receiptForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.target;
+        const payload = {
+            clientId: Number(form.clientId.value),
+            transactionType: 'RECEIPT',
+            grossWeight: Number(form.grossWeight.value),
+            purityPercent: Number(form.purityPercent.value),
+            makingChargePercent: 0,
+            transactionDate: form.transactionDate.value,
+            notes: form.notes.value
+        };
+        try {
+            await postJson('/api/transactions', payload);
+            document.getElementById('transactionMessage').textContent = 'Receipt transaction saved.';
+            form.reset();
+            form.transactionDate.value = today;
+            await Promise.all([loadClients(), loadDashboard(), loadReport()]);
+        } catch (error) {
+            document.getElementById('transactionMessage').textContent = error.message;
+        }
+    });
+
+    Promise.all([loadDashboard(), loadClients(), loadReport()]);
+</script>
+</body>
+</html>
