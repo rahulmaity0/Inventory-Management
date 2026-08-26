@@ -1,3 +1,5 @@
+INSERT INTO app_users (username, password, role) VALUES ('admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'ADMIN');
+
 INSERT INTO inventory_state (id, locker_pure_gold) VALUES (1, 1167.269);
 
 INSERT INTO clients (name, current_pure_balance) VALUES ('ABC Jewels', 291.571);

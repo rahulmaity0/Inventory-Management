@@ -97,8 +97,29 @@
     </style>
 </head>
 <body>
-<div class="wrap">
-    <h1>Jewellery Inventory Dashboard</h1>
+
+<!-- Login / Register View -->
+<div class="wrap" id="loginView">
+    <h1 id="authTitle" style="text-align: center;">Login</h1>
+    <div class="panel" style="max-width: 400px; margin: 0 auto;">
+        <form id="loginForm">
+            <input name="username" placeholder="Username" required>
+            <input name="password" type="password" placeholder="Password" required>
+            <button type="submit" id="authSubmitBtn">Login</button>
+        </form>
+        <div style="margin-top: 14px; text-align: center; font-size: 14px;">
+            <a href="javascript:void(0)" id="toggleAuthBtn" style="color: var(--gold); text-decoration: underline; cursor: pointer;">Don't have an account? Register here</a>
+        </div>
+        <div class="message" id="loginMessage" style="color: var(--red); margin-top: 10px; text-align: center;"></div>
+    </div>
+</div>
+
+<!-- Dashboard View -->
+<div class="wrap" id="dashboardView" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>Jewellery Inventory Dashboard</h1>
+        <button onclick="logout()" style="width: auto; background: var(--red);">Logout</button>
+    </div>
     <p class="muted">Simple demo UI for dashboard, client balances, and issue/receive transactions.</p>
 
     <section class="grid">
@@ -197,8 +218,114 @@
     document.querySelector('#issueForm [name="transactionDate"]').value = today;
     document.querySelector('#receiptForm [name="transactionDate"]').value = today;
 
+    let jwtToken = localStorage.getItem('jwtToken');
+
+    function checkAuth() {
+        if (jwtToken) {
+            document.getElementById('loginView').style.display = 'none';
+            document.getElementById('dashboardView').style.display = 'block';
+            Promise.all([loadDashboard(), loadClients(), loadReport()]);
+        } else {
+            document.getElementById('loginView').style.display = 'block';
+            document.getElementById('dashboardView').style.display = 'none';
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem('jwtToken');
+        jwtToken = null;
+        checkAuth();
+    }
+
+    let isRegisterMode = false;
+    const authTitle = document.getElementById('authTitle');
+    const authSubmitBtn = document.getElementById('authSubmitBtn');
+    const toggleAuthBtn = document.getElementById('toggleAuthBtn');
+    const loginMessage = document.getElementById('loginMessage');
+
+    toggleAuthBtn.addEventListener('click', () => {
+        isRegisterMode = !isRegisterMode;
+        loginMessage.textContent = '';
+        if (isRegisterMode) {
+            authTitle.textContent = 'Register New Account';
+            authSubmitBtn.textContent = 'Register';
+            toggleAuthBtn.textContent = 'Already have an account? Login here';
+        } else {
+            authTitle.textContent = 'Login';
+            authSubmitBtn.textContent = 'Login';
+            toggleAuthBtn.textContent = "Don't have an account? Register here";
+        }
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const form = event.target;
+        loginMessage.style.color = 'var(--red)';
+        loginMessage.textContent = '';
+
+        if (isRegisterMode) {
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: form.username.value,
+                        password: form.password.value,
+                        role: 'USER'
+                    })
+                });
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    throw new Error(errorText || 'Registration failed');
+                }
+                loginMessage.style.color = 'var(--green)';
+                loginMessage.textContent = 'Registration successful! You can now log in.';
+                toggleAuthBtn.click();
+            } catch (error) {
+                loginMessage.style.color = 'var(--red)';
+                loginMessage.textContent = error.message;
+            }
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: form.username.value,
+                    password: form.password.value
+                })
+            });
+            
+            if (!res.ok) {
+                throw new Error('Invalid credentials');
+            }
+            const data = await res.json();
+            
+            jwtToken = data.token;
+            localStorage.setItem('jwtToken', jwtToken);
+            checkAuth();
+        } catch (error) {
+            loginMessage.style.color = 'var(--red)';
+            loginMessage.textContent = error.message;
+        }
+    });
+
+    async function fetchWithAuth(url) {
+        const res = await fetch(url, {
+            headers: { 'Authorization': 'Bearer ' + jwtToken }
+        });
+        if (res.status === 403 || res.status === 401) {
+            logout();
+            throw new Error('Session expired');
+        }
+        return res;
+    }
+
     async function loadDashboard() {
-        const res = await fetch('/api/dashboard');
+        const res = await fetchWithAuth('/api/dashboard');
+        if (!res.ok) return;
         const data = await res.json();
         document.getElementById('lockerValue').textContent = data.lockerPureGold + ' g';
         document.getElementById('clientValue').textContent = data.totalClientPureGold + ' g';
@@ -207,7 +334,8 @@
     }
 
     async function loadClients() {
-        const res = await fetch('/api/clients');
+        const res = await fetchWithAuth('/api/clients');
+        if (!res.ok) return;
         const data = await res.json();
         const table = document.getElementById('clientTable');
         table.innerHTML = data.map(client => `
@@ -224,7 +352,8 @@
     }
 
     async function loadReport() {
-        const res = await fetch('/api/reports/monthly-flow');
+        const res = await fetchWithAuth('/api/reports/monthly-flow');
+        if (!res.ok) return;
         const data = await res.json();
         const table = document.getElementById('reportTable');
         table.innerHTML = data.map(row => `
@@ -239,7 +368,10 @@
     async function postJson(url, payload) {
         const res = await fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + jwtToken
+            },
             body: JSON.stringify(payload)
         });
         const data = await res.json();
@@ -312,7 +444,7 @@
         }
     });
 
-    Promise.all([loadDashboard(), loadClients(), loadReport()]);
+    checkAuth();
 </script>
 </body>
 </html>
