@@ -50,8 +50,11 @@ public class TransactionService {
         BigDecimal pureGoldEquivalent = calculatePureGold(request.grossWeight(), effectivePurityPercent);
 
         if (request.transactionType() == TransactionType.ISSUE) {
-            ensureEnoughLockerGold(inventoryState.getLockerPureGold(), pureGoldEquivalent);
-            inventoryState.setLockerPureGold(inventoryState.getLockerPureGold().subtract(pureGoldEquivalent));
+            // Actual gold leaving the locker (without making charge)
+            BigDecimal actualPureGold = calculatePureGold(request.grossWeight(), request.purityPercent());
+            ensureEnoughLockerGold(inventoryState.getLockerPureGold(), actualPureGold);
+            inventoryState.setLockerPureGold(inventoryState.getLockerPureGold().subtract(actualPureGold));
+            // Client owes the effective amount (with making charge) — difference is profit
             client.setCurrentPureBalance(client.getCurrentPureBalance().add(pureGoldEquivalent));
         } else {
             ensureClientHasEnoughBalance(client.getCurrentPureBalance(), pureGoldEquivalent);
