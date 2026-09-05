@@ -57,11 +57,16 @@ public class AuthController {
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body("Username is already taken.");
         }
-        User user = new User(
-                request.getUsername(),
-                passwordEncoder.encode(request.getPassword()),
-                request.getRole() != null ? request.getRole() : "USER"
-        );
+        // Default anyone who does not send a role to USER.
+        String role = request.getRole();
+        if (role == null) {
+            role = "USER";
+        }
+
+        // The raw password is never stored - only its BCrypt hash.
+        String hashedPassword = passwordEncoder.encode(request.getPassword());
+
+        User user = new User(request.getUsername(), hashedPassword, role);
         userRepository.save(user);
         return ResponseEntity.ok("User registered successfully.");
     }
