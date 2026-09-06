@@ -128,6 +128,7 @@ public class TransactionService {
         transaction.setMakingChargePercent(scale2(makingChargePercent));
         transaction.setEffectivePurityPercent(scale2(effectivePurityPercent));
         transaction.setPureGoldEquivalent(pureGoldEquivalent);
+        transaction.setItemType(request.getItemType());
         transaction.setTransactionDate(request.getTransactionDate());
         transaction.setNotes(request.getNotes());
 

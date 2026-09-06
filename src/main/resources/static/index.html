@@ -16,6 +16,10 @@
             --red: #a33e2f;
         }
         * { box-sizing: border-box; }
+        .tickerLbl { font-size: 12px; letter-spacing: .04em; }
+        .tickerPx { font-size: 30px; font-weight: 700; color: var(--gold); line-height: 1.15; }
+        .tickerVal { font-size: 20px; font-weight: 700; color: var(--green); }
+        .tickerSrc { font-size: 11px; margin-top: 6px; }
         body {
             margin: 0;
             font-family: "Segoe UI", sans-serif;
@@ -144,6 +148,24 @@
     <section class="layout">
         <div class="stack">
             <div class="panel">
+                <h2>Gold Price</h2>
+                <div class="tickerLbl muted">24K &middot; per gram</div>
+                <div class="tickerPx" id="pxGram">-</div>
+                <div class="tickerLbl muted">per 10 g &middot; <span id="pxTen">-</span></div>
+                <div class="tickerSrc muted" id="pxSrc">loading</div>
+                <hr style="border:0;border-top:1px solid var(--line);margin:12px 0">
+                <div class="tickerLbl muted">Locker value at this price</div>
+                <div class="tickerVal" id="lockerWorth">-</div>
+            </div>
+
+            <div class="panel">
+                <h2>Locker</h2>
+                <div class="muted" id="biscuitCount">-</div>
+                <svg id="biscuits" viewBox="0 0 420 190" width="100%" height="190"
+                     role="img" aria-label="Locker gold drawn as 100 gram biscuits"></svg>
+            </div>
+
+            <div class="panel">
                 <h2>Clients</h2>
                 <table>
                     <thead>
@@ -193,6 +215,7 @@
                         <input name="purityPercent" type="number" step="0.01" min="0.01" placeholder="Purity %" required>
                         <input name="makingChargePercent" type="number" step="0.01" min="0" placeholder="Making charge %" required>
                         <input name="transactionDate" type="date" required>
+                        <select name="itemType"><option value="">Item type (optional)</option><option value="NECKLACE">Necklace</option><option value="EARRINGS">Earrings</option><option value="BANGLES">Bangles</option><option value="CHAIN">Chain</option><option value="RING">Ring</option><option value="BRACELET">Bracelet</option><option value="COIN_OR_BAR">Coin / Bar</option><option value="OTHER">Other</option></select>
                         <textarea name="notes" placeholder="Notes"></textarea>
                         <button type="submit">Save Issue</button>
                     </form>
@@ -203,6 +226,7 @@
                         <input name="grossWeight" type="number" step="0.001" min="0.001" placeholder="Gross weight" required>
                         <input name="purityPercent" type="number" step="0.01" min="0.01" placeholder="Purity %" required>
                         <input name="transactionDate" type="date" required>
+                        <select name="itemType"><option value="">Item type (optional)</option><option value="NECKLACE">Necklace</option><option value="EARRINGS">Earrings</option><option value="BANGLES">Bangles</option><option value="CHAIN">Chain</option><option value="RING">Ring</option><option value="BRACELET">Bracelet</option><option value="COIN_OR_BAR">Coin / Bar</option><option value="OTHER">Other</option></select>
                         <textarea name="notes" placeholder="Notes"></textarea>
                         <button type="submit">Save Receipt</button>
                     </form>
@@ -224,7 +248,7 @@
         if (jwtToken) {
             document.getElementById('loginView').style.display = 'none';
             document.getElementById('dashboardView').style.display = 'block';
-            Promise.all([loadDashboard(), loadClients(), loadReport()]);
+            Promise.all([loadDashboard(), loadClients(), loadReport(), loadGoldPrice()]);
         } else {
             document.getElementById('loginView').style.display = 'block';
             document.getElementById('dashboardView').style.display = 'none';
@@ -323,6 +347,104 @@
         return res;
     }
 
+
+    // ── gold price ticker ───────────────────────────────────────────────
+    // This endpoint is public, so no token is needed. The server already
+    // cached the price, so calling it is cheap.
+    let pricePerGram = 0;
+
+    async function loadGoldPrice() {
+        try {
+            const res = await fetch('/api/gold-price');
+            if (!res.ok) return;
+            const data = await res.json();
+            pricePerGram = Number(data.pricePerGram);
+            document.getElementById('pxGram').textContent = rupees(data.pricePerGram);
+            document.getElementById('pxTen').textContent = rupees(data.pricePerTenGram);
+            document.getElementById('pxSrc').textContent =
+                data.source + ' · ' + String(data.asOf).replace('T', ' ').slice(0, 16);
+            updateLockerWorth();
+        } catch (e) {
+            document.getElementById('pxSrc').textContent = 'price unavailable';
+        }
+    }
+
+    function rupees(n) {
+        return '₹ ' + Number(n).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    }
+
+    let lockerGrams = 0;
+    function updateLockerWorth() {
+        if (!pricePerGram) return;
+        document.getElementById('lockerWorth').textContent = rupees(lockerGrams * pricePerGram);
+    }
+
+    // ── locker drawn as 100 g biscuits ──────────────────────────────────
+    // Whole biscuits plus one short one for the remainder. Nothing here talks
+    // to the server - it just draws the number the dashboard already has.
+    const BISCUIT = 100;
+
+    function seeded(i) {
+        const x = Math.sin(i * 127.1 + 31.7) * 43758.5453;
+        return x - Math.floor(x);
+    }
+
+    function drawBiscuits(grams) {
+        const whole = Math.floor(grams / BISCUIT);
+        const frac = (grams - whole * BISCUIT) / BISCUIT;
+        const total = whole + (frac > 0.05 ? 1 : 0);
+        const shown = Math.min(total, 12);
+
+        document.getElementById('biscuitCount').textContent =
+            grams.toFixed(3) + ' g  ·  ' + total + ' × 100 g biscuits';
+
+        const perRow = [4, 3, 3, 2];
+        let out = '';
+        let idx = 0, y = 118, row = 0;
+
+        while (idx < shown && row < perRow.length) {
+            const k = Math.min(perRow[row], shown - idx);
+            const rowW = k * 84;
+            for (let i = 0; i < k; i++, idx++) {
+                const partial = (idx === whole && frac > 0.05);
+                const w = 96 * (partial ? Math.max(0.3, frac) : 1);
+                const x = (420 - rowW) / 2 + i * 84 + (seeded(idx) - 0.5) * 10;
+                const rot = (seeded(idx + 7) - 0.5) * 8;
+                out += biscuitSvg(x, y + (seeded(idx + 3) - 0.5) * 5, w, 44, rot);
+            }
+            y -= 26; row++;
+        }
+        if (total > shown) {
+            out += '<text x="410" y="182" text-anchor="end" font-size="11" fill="#7b6a57">+'
+                 + (total - shown) + ' more</text>';
+        }
+        document.getElementById('biscuits').innerHTML = defsSvg() + out;
+    }
+
+    function defsSvg() {
+        return '<defs>'
+            + '<linearGradient id="bf" x1="0.1" y1="0" x2="0.9" y2="1">'
+            + '<stop offset="0%" stop-color="#fff6d0"/><stop offset="14%" stop-color="#f2cd5e"/>'
+            + '<stop offset="46%" stop-color="#e0ae32"/><stop offset="62%" stop-color="#f7dd8c"/>'
+            + '<stop offset="100%" stop-color="#8a6208"/></linearGradient>'
+            + '<linearGradient id="be" x1="0" y1="0" x2="0" y2="1">'
+            + '<stop offset="0%" stop-color="#c08c17"/><stop offset="100%" stop-color="#5d4205"/></linearGradient>'
+            + '<filter id="ao"><feGaussianBlur stdDeviation="3"/></filter>'
+            + '</defs>';
+    }
+
+    function biscuitSvg(x, y, w, h, rot) {
+        const d = 8, r = 4;
+        return '<g transform="translate(' + x.toFixed(1) + ',' + y.toFixed(1) + ') rotate(' + rot.toFixed(2) + ')">'
+            + '<ellipse cx="' + (w / 2 + 3) + '" cy="' + (h + d) + '" rx="' + (w * 0.46) + '" ry="5" fill="#000" opacity=".28" filter="url(#ao)"/>'
+            + '<path d="M0 ' + h + ' h' + w + ' v' + d + ' q0 ' + r + ' -' + r + ' ' + r + ' h-' + (w - 2 * r) + ' q-' + r + ' 0 -' + r + ' -' + r + ' Z" fill="url(#be)"/>'
+            + '<rect x="0" y="0" width="' + w + '" height="' + h + '" rx="' + r + '" fill="url(#bf)"/>'
+            + '<path d="M' + r + ' 1.2 H' + (w - r) + '" stroke="#fff8dc" stroke-opacity=".85" stroke-width="1.3" fill="none"/>'
+            + '<path d="M' + r + ' ' + (h - 0.8) + ' H' + (w - r) + '" stroke="#6d4d06" stroke-opacity=".55" stroke-width="1.2" fill="none"/>'
+            + (w > 60 ? '<text x="' + (w / 2) + '" y="' + (h * 0.62) + '" text-anchor="middle" font-size="10" fill="#6d4d06" opacity=".7">999.0</text>' : '')
+            + '</g>';
+    }
+
     async function loadDashboard() {
         const res = await fetchWithAuth('/api/dashboard');
         if (!res.ok) return;
@@ -331,6 +453,10 @@
         document.getElementById('clientValue').textContent = data.totalClientPureGold + ' g';
         document.getElementById('totalValue').textContent = data.totalBusinessPureGold + ' g';
         document.getElementById('clientCount').textContent = data.clientCount;
+
+        lockerGrams = Number(data.lockerPureGold);
+        drawBiscuits(lockerGrams);
+        updateLockerWorth();
     }
 
     async function loadClients() {
@@ -408,6 +534,7 @@
             purityPercent: Number(form.purityPercent.value),
             makingChargePercent: Number(form.makingChargePercent.value),
             transactionDate: form.transactionDate.value,
+            itemType: form.itemType.value || null,
             notes: form.notes.value
         };
         try {
@@ -431,6 +558,7 @@
             purityPercent: Number(form.purityPercent.value),
             makingChargePercent: 0,
             transactionDate: form.transactionDate.value,
+            itemType: form.itemType.value || null,
             notes: form.notes.value
         };
         try {
@@ -445,6 +573,8 @@
     });
 
     checkAuth();
+    // the server only refetches every 30 min; this just re-reads its cache
+    setInterval(loadGoldPrice, 5 * 60 * 1000);
 </script>
 </body>
 </html>

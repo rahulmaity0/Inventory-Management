@@ -1,5 +1,6 @@
 package com.rahul.inventorybilling.dto;
 
+import com.rahul.inventorybilling.model.ItemType;
 import com.rahul.inventorybilling.model.TransactionType;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
@@ -39,6 +40,9 @@ public class CreateTransactionRequest {
 
     @NotNull
     private LocalDate transactionDate;
+
+    // Optional - a receipt of loose metal is not an ornament at all.
+    private ItemType itemType;
 
     @Size(max = 300)
     private String notes;
@@ -92,6 +96,14 @@ public class CreateTransactionRequest {
 
     public void setTransactionDate(LocalDate transactionDate) {
         this.transactionDate = transactionDate;
+    }
+
+    public ItemType getItemType() {
+        return itemType;
+    }
+
+    public void setItemType(ItemType itemType) {
+        this.itemType = itemType;
     }
 
     public String getNotes() {

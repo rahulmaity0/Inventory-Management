@@ -80,6 +80,7 @@ public class ClientService {
                 transaction.getMakingChargePercent(),
                 transaction.getEffectivePurityPercent(),
                 transaction.getPureGoldEquivalent(),
+                transaction.getItemType(),
                 transaction.getNotes());
     }
 }
