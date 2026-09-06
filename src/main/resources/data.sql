@@ -15,6 +15,7 @@ INSERT INTO gold_transactions (
     pure_gold_equivalent,
     transaction_type,
     transaction_date,
+    item_type,
     notes
 ) VALUES (
     1,
@@ -25,6 +26,7 @@ INSERT INTO gold_transactions (
     301.521,
     'ISSUE',
     DATE '2026-03-01',
+    'NECKLACE',
     'Jewellery issued to client using effective purity with making charge'
 );
 
@@ -37,6 +39,7 @@ INSERT INTO gold_transactions (
     pure_gold_equivalent,
     transaction_type,
     transaction_date,
+    item_type,
     notes
 ) VALUES (
     2,
@@ -47,6 +50,7 @@ INSERT INTO gold_transactions (
     148.750,
     'ISSUE',
     DATE '2026-03-05',
+    'BANGLES',
     'Bangles issued to client'
 );
 
@@ -59,6 +63,7 @@ INSERT INTO gold_transactions (
     pure_gold_equivalent,
     transaction_type,
     transaction_date,
+    item_type,
     notes
 ) VALUES (
     3,
@@ -69,6 +74,7 @@ INSERT INTO gold_transactions (
     92.410,
     'ISSUE',
     DATE '2026-03-09',
+    'NECKLACE',
     'Necklace issued to client'
 );
 
@@ -81,6 +87,7 @@ INSERT INTO gold_transactions (
     pure_gold_equivalent,
     transaction_type,
     transaction_date,
+    item_type,
     notes
 ) VALUES (
     1,
@@ -91,5 +98,6 @@ INSERT INTO gold_transactions (
     9.950,
     'RECEIPT',
     DATE '2026-03-10',
+    'COIN_OR_BAR',
     'Client returned a 99.5 purity biscuit'
 );

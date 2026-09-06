@@ -1,5 +1,6 @@
 package com.rahul.inventorybilling.dto;
 
+import com.rahul.inventorybilling.model.ItemType;
 import com.rahul.inventorybilling.model.TransactionType;
 
 import java.math.BigDecimal;
@@ -16,6 +17,7 @@ public class TransactionResponse {
     private BigDecimal makingChargePercent;
     private BigDecimal effectivePurityPercent;
     private BigDecimal pureGoldEquivalent;
+    private ItemType itemType;
     private String notes;
 
     public TransactionResponse(Long id,
@@ -26,6 +28,7 @@ public class TransactionResponse {
                                BigDecimal makingChargePercent,
                                BigDecimal effectivePurityPercent,
                                BigDecimal pureGoldEquivalent,
+                               ItemType itemType,
                                String notes) {
         this.id = id;
         this.transactionDate = transactionDate;
@@ -35,6 +38,7 @@ public class TransactionResponse {
         this.makingChargePercent = makingChargePercent;
         this.effectivePurityPercent = effectivePurityPercent;
         this.pureGoldEquivalent = pureGoldEquivalent;
+        this.itemType = itemType;
         this.notes = notes;
     }
 
@@ -68,6 +72,10 @@ public class TransactionResponse {
 
     public BigDecimal getPureGoldEquivalent() {
         return pureGoldEquivalent;
+    }
+
+    public ItemType getItemType() {
+        return itemType;
     }
 
     public String getNotes() {

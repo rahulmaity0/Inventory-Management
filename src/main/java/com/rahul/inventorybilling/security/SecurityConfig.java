@@ -44,7 +44,7 @@ public class SecurityConfig {
                 // Login, register and the static frontend are open. Everything
                 // else needs a valid token.
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/", "/index.html", "/css/**", "/js/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/gold-price", "/", "/index.html", "/css/**", "/js/**").permitAll()
                         .anyRequest().authenticated())
 
                 // STATELESS means no session is created or looked up. Every

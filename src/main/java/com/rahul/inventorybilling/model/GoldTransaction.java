@@ -46,6 +46,13 @@ public class GoldTransaction {
     @Column(nullable = false)
     private TransactionType transactionType;
 
+    // EnumType.STRING stores the word NECKLACE in the column. The default,
+    // EnumType.ORDINAL, would store 0 - and every row would silently change
+    // meaning the day someone reorders the enum. Always use STRING.
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private ItemType itemType;
+
     @Column(nullable = false)
     private LocalDate transactionDate;
 
@@ -81,6 +88,10 @@ public class GoldTransaction {
 
     public void setTransactionType(TransactionType transactionType) {
         this.transactionType = transactionType;
+    }
+
+    public void setItemType(ItemType itemType) {
+        this.itemType = itemType;
     }
 
     public void setTransactionDate(LocalDate transactionDate) {
@@ -121,6 +132,10 @@ public class GoldTransaction {
 
     public TransactionType getTransactionType() {
         return transactionType;
+    }
+
+    public ItemType getItemType() {
+        return itemType;
     }
 
     public LocalDate getTransactionDate() {
