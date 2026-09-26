@@ -1,5 +1,7 @@
 # Inventory Billing Backend
 
+[![CI](https://github.com/rahulmaity0/Inventory-Management/actions/workflows/ci.yml/badge.svg)](https://github.com/rahulmaity0/Inventory-Management/actions/workflows/ci.yml)
+
 This is the Spring Boot backend we are building for your resume.
 
 ## Lesson 1 structure
